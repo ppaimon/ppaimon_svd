@@ -8,9 +8,7 @@ class TwoLayerNet(nn.Module):
 
         U, S, V = torch.svd(torch.rand(hidden_size,input_size), some=False)
 
-#        print(S)
-
-        self.S = nn.Parameter( S , requires_grad=True )
+        self.S = nn.Parameter( torch.ones(len(S)) , requires_grad=True )
         self.register_buffer('U', U)
         self.register_buffer('V', V)
 
@@ -19,11 +17,17 @@ class TwoLayerNet(nn.Module):
     def forward(self, x):
         
         x = self.V.t() @ x
-        x = F.pad( torch.diag(self.S) , (0, self.V.t().shape[1]-self.S.shape[0], 0, 0), 'constant', 0) @ x
+        x = F.pad( 
+            torch.diag(self.S) , 
+            (
+                0, self.V.t().shape[1]-self.S.shape[0], 
+                0, self.U.shape[0]-self.S.shape[0]
+            ), 'constant', 0
+        ) @ x
         
         x = self.U @ x
 
-        x = F.relu(x)
+        x = F.sigmoid(x)
 
         x = self.output(x)
         return x
